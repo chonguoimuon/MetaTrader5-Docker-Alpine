@@ -1,0 +1,111 @@
+services:
+  traefik:
+    image: traefik:3.0
+    container_name: traefik
+    ports:
+      - 80:80 # HTTP port
+      - 443:443 # HTTPS port
+    restart: always
+    labels:
+      # Traefik configuration
+      traefik.enable: true
+      traefik.docker.network: traefik-public
+      traefik.http.services.traefik-dashboard.loadbalancer.server.port: 8080
+
+      # HTTP router configuration
+      traefik.http.routers.traefik-dashboard-http.entrypoints: http
+      traefik.http.routers.traefik-dashboard-http.rule: Host(`${TRAEFIK_DOMAIN?Variable not set}`)
+
+      # HTTPS router configuration
+      traefik.http.routers.traefik-dashboard-https.entrypoints: https
+      traefik.http.routers.traefik-dashboard-https.rule: Host(`${TRAEFIK_DOMAIN?Variable not set}`)
+      traefik.http.routers.traefik-dashboard-https.tls: true
+      traefik.http.routers.traefik-dashboard-https.tls.certresolver: le
+      traefik.http.routers.traefik-dashboard-https.service: api@internal
+
+      # HTTPS redirect middleware
+      traefik.http.middlewares.https-redirect.redirectscheme.scheme: https
+      traefik.http.middlewares.https-redirect.redirectscheme.permanent: true
+      traefik.http.routers.traefik-dashboard-http.middlewares: https-redirect
+
+      # HTTP Basic Auth middleware
+      traefik.http.middlewares.admin-auth.basicauth.users: ${TRAEFIK_USERNAME?Variable not set}:${TRAEFIK_HASHED_PASSWORD?Variable not set}
+      traefik.http.routers.traefik-dashboard-https.middlewares: admin-auth
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Docker socket for reading service labels
+      - traefik-public-certificates:/certificates # Certificate storage
+    command:
+      # Docker provider configuration
+      - --providers.docker
+      - --providers.docker.exposedbydefault=false
+
+      # Entrypoints configuration
+      - --entrypoints.http.address=:80
+      - --entrypoints.https.address=:443
+
+      # Let's Encrypt configuration
+      - --certificatesresolvers.le.acme.email=${ACME_EMAIL?Variable not set}
+      - --certificatesresolvers.le.acme.storage=/certificates/acme.json
+      - --certificatesresolvers.le.acme.tlschallenge=true
+
+      # Logging and API configuration
+      - --accesslog
+      - --log
+      - --api
+    networks:
+      - traefik-public # Public network for Traefik and other services
+
+  mt5:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mt5
+    volumes:
+      - ./config:/config
+    networks:
+      - traefik-public
+      - default
+    env_file:
+      - .env
+    restart: unless-stopped
+    labels:
+      # Enable Traefik for this service
+      traefik.enable: true
+      traefik.docker.network: traefik-public
+
+      # Router for vnc.mt5.${domain} (Port 3000)
+      traefik.http.routers.vnc-mt5-http.rule: Host(`${VNC_DOMAIN}`)
+      traefik.http.routers.vnc-mt5-http.entrypoints: http
+      traefik.http.routers.vnc-mt5-http.middlewares: https-redirect
+
+      traefik.http.routers.vnc-mt5-https.rule: Host(`${VNC_DOMAIN}`)
+      traefik.http.routers.vnc-mt5-https.entrypoints: https
+      traefik.http.routers.vnc-mt5-https.tls: true
+      traefik.http.routers.vnc-mt5-https.tls.certresolver: le
+      traefik.http.routers.vnc-mt5-https.service: vnc-mt5-service
+
+      traefik.http.services.vnc-mt5-service.loadbalancer.server.port: 3000
+
+      # Router for api.mt5.${domain} (Port 5001)
+      traefik.http.routers.api-mt5-http.rule: Host(`${API_DOMAIN}`)
+      traefik.http.routers.api-mt5-http.entrypoints: http
+      traefik.http.routers.api-mt5-http.middlewares: https-redirect
+
+      traefik.http.routers.api-mt5-https.rule: Host(`${API_DOMAIN}`)
+      traefik.http.routers.api-mt5-https.entrypoints: https
+      traefik.http.routers.api-mt5-https.tls: true
+      traefik.http.routers.api-mt5-https.tls.certresolver: le
+      traefik.http.routers.api-mt5-https.service: api-mt5-service
+
+      traefik.http.services.api-mt5-service.loadbalancer.server.port: 5001
+    depends_on:
+      - traefik
+
+volumes:
+  traefik-public-certificates: # Persistent volume for certificates
+
+networks:
+  default:
+    driver: bridge
+  traefik-public:
+    external: true

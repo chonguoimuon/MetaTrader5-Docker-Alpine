@@ -1,0 +1,9 @@
+numpy==1.22.4
+pandas==1.4.2
+pytz
+python-dotenv
+flasgger
+python-json-logger
+flask
+MetaTrader5
+
