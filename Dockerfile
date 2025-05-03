@@ -35,10 +35,10 @@ RUN touch /var/log/mt5_setup.log && \
     chmod 644 /var/log/mt5_setup.log
     
 # remove sudo
-#RUN apk del sudo
+RUN apk del sudo
 
 # ports and volumes
-EXPOSE 3000 5001
+EXPOSE 3000 5000 5001 8001 18812
 
 VOLUME /config
     
