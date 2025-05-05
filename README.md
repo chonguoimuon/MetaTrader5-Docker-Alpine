@@ -1,6 +1,6 @@
 # MetaTrader 5 Docker Setup
 
-![Banner](https://github.com/user-attachments/assets/6b5101ea-275b-4ae4-8f65-6a4fc30f30bf)
+![Banner](https://raw.githubusercontent.com/chonguoimuon/MetaTrader5-Docker-Alpine/refs/heads/main/image/SWAGGER.png)
 
 ## Table of Contents
 
@@ -130,7 +130,7 @@ This command builds the Docker images and starts the services in detached mode.
 
 3. **Swagger(REST API) Dashboard**
 
-   Access the Swagger dashboard at `https://your-api-domain.com/apidocs/#/`.
+   Access the Swagger dashboard at `https://your-api-domain.com/apidocs/`.
 
 
 4. **Managing Services**
