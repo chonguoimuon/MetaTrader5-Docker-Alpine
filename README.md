@@ -58,7 +58,11 @@ This project provides a Docker-based setup to run MetaTrader 5 (MT5) using Wine 
    ```
 
    Open the `.env` file and set the necessary variables:
-
+   ```bash
+   nano .env
+   ```
+   
+   Setup info `.env`
    ```env
    # Backend - MT5
    CUSTOM_USER=admin
@@ -124,7 +128,12 @@ This command builds the Docker images and starts the services in detached mode.
 
    Access the Traefik dashboard at `https://your-traefik-domain.com`. You will be prompted for the Traefik username and password configured in the `.env` file.
 
-3. **Managing Services**
+3. **Swagger(REST API) Dashboard**
+
+   Access the Swagger dashboard at `https://your-api-domain.com/apidocs/#/`.
+
+
+4. **Managing Services**
 
    - **Start Services:**
 
