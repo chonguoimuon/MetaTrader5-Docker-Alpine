@@ -6,4 +6,4 @@ flasgger
 python-json-logger
 flask
 MetaTrader5
-
+requests
