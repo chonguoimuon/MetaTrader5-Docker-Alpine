@@ -54,9 +54,10 @@ if __name__ == '__main__':
     # The Flask app.run() call is blocking, so the worker will run in the background thread
     # It's important that the worker is started before the app runs.
     try:
-        app.run(host='0.0.0.0', port=int(os.environ.get('MT5_API_PORT')))
         start_worker()
-        start_signal_worker()    # Khởi động trade signal worker        
+        start_signal_worker()    # Khởi động trade signal worker           
+        app.run(host='0.0.0.0', port=int(os.environ.get('MT5_API_PORT')))
+     
         
     finally:
         # Ensure the worker thread is stopped when the app exits
