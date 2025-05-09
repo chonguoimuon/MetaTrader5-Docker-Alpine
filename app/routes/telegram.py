@@ -18,7 +18,19 @@ logger = logging.getLogger(__name__)
                 'type': 'object',
                 'properties': {
                     'bot_token': {'type': 'string', 'description': 'Telegram bot token.'},
-                    'chat_id': {'type': 'string', 'description': 'Telegram chat ID.'}
+                    'chat_id': {'type': 'string', 'description': 'Telegram chat ID.'},
+                    'send_open': {
+                        'type': 'boolean',
+                        'description': 'Enable/disable sending open position signals. Default: true.'
+                    },
+                    'send_close': {
+                        'type': 'boolean',
+                        'description': 'Enable/disable sending close position signals. Default: true.'
+                    },
+                    'send_modify_tp_sl': {
+                        'type': 'boolean',
+                        'description': 'Enable/disable sending TP/SL modification signals. Default: true.'
+                    }
                 },
                 'required': ['bot_token', 'chat_id']
             }
@@ -36,7 +48,10 @@ logger = logging.getLogger(__name__)
                         'properties': {
                             'bot_token': {'type': 'string'},
                             'chat_id': {'type': 'string'},
-                            'enabled': {'type': 'boolean'}
+                            'enabled': {'type': 'boolean'},
+                            'send_open': {'type': 'boolean'},
+                            'send_close': {'type': 'boolean'},
+                            'send_modify_tp_sl': {'type': 'boolean'}
                         }
                     }
                 }
@@ -51,9 +66,8 @@ logger = logging.getLogger(__name__)
     }
 })
 def set_telegram_config_endpoint():
-    """Set or update Telegram bot token and chat ID."""
+    """Set or update Telegram bot token, chat ID, and signal preferences."""
     try:
-        # Kiểm tra và parse JSON
         data = request.get_json(silent=True)
         if not data:
             logger.error("Invalid JSON in request body")
@@ -64,12 +78,15 @@ def set_telegram_config_endpoint():
 
         bot_token = data["bot_token"]
         chat_id = data["chat_id"]
-        set_telegram_config(bot_token, chat_id)
+        send_open = data.get("send_open")
+        send_close = data.get("send_close")
+        send_modify_tp_sl = data.get("send_modify_tp_sl")
 
-        # Test gửi tin nhắn để kiểm tra cấu hình
-        test_message = "🔔 *MT5 Bot Configuration Updated*\nBot token and chat ID configured successfully."
+        set_telegram_config(bot_token, chat_id, send_open, send_close, send_modify_tp_sl)
+
+        test_message = "🔔 *MT5 Bot Configuration Updated*\nBot token, chat ID, and signal preferences configured successfully."
         config = get_telegram_config()
-        sent = send_telegram_message(test_message)
+        sent = send_telegram_message(test_message, action="config")
         if not sent and config["enabled"]:
             logger.warning("Telegram configuration saved but test message failed to send.")
 
@@ -78,7 +95,10 @@ def set_telegram_config_endpoint():
             "config": {
                 "bot_token": config["bot_token"],
                 "chat_id": config["chat_id"],
-                "enabled": config["enabled"]
+                "enabled": config["enabled"],
+                "send_open": config["send_open"],
+                "send_close": config["send_close"],
+                "send_modify_tp_sl": config["send_modify_tp_sl"]
             }
         })
 
@@ -100,7 +120,10 @@ def set_telegram_config_endpoint():
                         'properties': {
                             'bot_token': {'type': 'string'},
                             'chat_id': {'type': 'string'},
-                            'enabled': {'type': 'boolean'}
+                            'enabled': {'type': 'boolean'},
+                            'send_open': {'type': 'boolean'},
+                            'send_close': {'type': 'boolean'},
+                            'send_modify_tp_sl': {'type': 'boolean'}
                         }
                     }
                 }
@@ -119,7 +142,10 @@ def get_telegram_config_endpoint():
             "config": {
                 "bot_token": config["bot_token"],
                 "chat_id": config["chat_id"],
-                "enabled": config["enabled"]
+                "enabled": config["enabled"],
+                "send_open": config["send_open"],
+                "send_close": config["send_close"],
+                "send_modify_tp_sl": config["send_modify_tp_sl"]
             }
         })
 
@@ -159,11 +185,16 @@ def enable_telegram_signals():
             return jsonify({"error": "Cannot enable: bot_token and chat_id must be configured"}), 400
 
         config["enabled"] = True
-        set_telegram_config(config["bot_token"], config["chat_id"])  # Cập nhật lại để đảm bảo đồng bộ
+        set_telegram_config(
+            config["bot_token"],
+            config["chat_id"],
+            config["send_open"],
+            config["send_close"],
+            config["send_modify_tp_sl"]
+        )
 
-        # Gửi tin nhắn thông báo bật tính năng
         message = "🔔 *MT5 Bot Notification*\nTelegram signal sending has been enabled."
-        send_telegram_message(message)
+        send_telegram_message(message, action="config")
 
         return jsonify({"message": "Telegram signal sending enabled", "enabled": True})
 
@@ -196,12 +227,17 @@ def disable_telegram_signals():
     try:
         config = get_telegram_config()
         config["enabled"] = False
-        set_telegram_config(config["bot_token"], config["chat_id"])  # Cập nhật lại để đảm bảo đồng bộ
+        set_telegram_config(
+            config["bot_token"],
+            config["chat_id"],
+            config["send_open"],
+            config["send_close"],
+            config["send_modify_tp_sl"]
+        )
 
-        # Gửi tin nhắn thông báo tắt tính năng (nếu vẫn còn cấu hình)
         if config["bot_token"] and config["chat_id"]:
             message = "🔔 *MT5 Bot Notification*\nTelegram signal sending has been disabled."
-            send_telegram_message(message)
+            send_telegram_message(message, action="config")
 
         return jsonify({"message": "Telegram signal sending disabled", "enabled": False})
 
