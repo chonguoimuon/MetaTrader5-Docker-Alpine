@@ -54,6 +54,12 @@ services:
       - --api
     networks:
       - traefik-public # Public network for Traefik and other services
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"  # Giới hạn kích thước của mỗi file log là 1MB
+        max-file: "1"   # Giới hạn số lượng file log được giữ lại là 1
+
 
   mt5:
     build:
@@ -100,6 +106,11 @@ services:
       traefik.http.services.api-mt5-service.loadbalancer.server.port: 5001
     depends_on:
       - traefik
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"  # Giới hạn kích thước của mỗi file log là 1MB
+        max-file: "1"   # Giới hạn số lượng file log được giữ lại là 1
 
 volumes:
   traefik-public-certificates: # Persistent volume for certificates
