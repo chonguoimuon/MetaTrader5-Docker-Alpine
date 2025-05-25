@@ -56,7 +56,8 @@ if __name__ == '__main__':
     try:
         start_worker()
         start_signal_worker()    # Khởi động trade signal worker           
-        app.run(host='0.0.0.0', port=int(os.environ.get('MT5_API_PORT')))
+        # app.run(host='0.0.0.0', port=int(os.environ.get('MT5_API_PORT')))
+        app.run(host='0.0.0.0', port=5001)
      
         
     finally:

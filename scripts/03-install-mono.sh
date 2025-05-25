@@ -24,4 +24,4 @@ else
 fi
 
 # Initialize Wine configuration
-winecfg
+#winecfg

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+WINEPREFIX=/config/.wine
+
 # Source common variables and functions
 source /scripts/02-common.sh
 
